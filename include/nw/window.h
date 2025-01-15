@@ -12,7 +12,8 @@ namespace nw
         Window();
         ~Window();
 
-        void Create(WindowDesc desc);
+        void Create(const WindowDesc &desc);
+        bool Update();
 
     private:
         struct Impl;

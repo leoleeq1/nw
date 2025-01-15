@@ -12,8 +12,38 @@ namespace nw
         bool sizemoving = false;
         bool suspended = false;
         bool minimized = false;
-        bool fullscreen = false;
+        WindowMode fullscreen = WindowMode::Windowed;
     };
+
+    struct WindowStyleAndSize
+    {
+        DWORD style = WS_OVERLAPPEDWINDOW;
+        DWORD exStyle = WS_EX_OVERLAPPEDWINDOW;
+        int32_t cmdShow = SW_SHOWDEFAULT;
+        int32_t width = 800;
+        int32_t height = 600;
+    };
+
+    static WindowStyleAndSize GetStyleAndSize(WindowMode mode, WindowSize defaultSize)
+    {
+        return WindowStyleAndSize{
+            .style = mode == WindowMode::Windowed
+                         ? static_cast<DWORD>(WS_OVERLAPPEDWINDOW)
+                         : static_cast<DWORD>(WS_POPUP),
+            .exStyle = mode == WindowMode::Windowed
+                           ? static_cast<DWORD>(WS_EX_OVERLAPPEDWINDOW)
+                           : static_cast<DWORD>(WS_EX_APPWINDOW),
+            .cmdShow = mode == WindowMode::Windowed
+                           ? SW_SHOWDEFAULT
+                           : SW_SHOWMAXIMIZED,
+            .width = mode == WindowMode::Windowed
+                         ? static_cast<int32_t>(defaultSize.width)
+                         : GetSystemMetrics(SM_CXSCREEN),
+            .height = mode == WindowMode::Windowed
+                          ? static_cast<int32_t>(defaultSize.height)
+                          : GetSystemMetrics(SM_CYSCREEN),
+        };
+    }
 
     struct Window::Impl
     {
@@ -25,9 +55,15 @@ namespace nw
     };
 
     Window::Window() = default;
-    Window::~Window() = default;
+    Window::~Window()
+    {
+        if (impl_)
+        {
+            UnregisterClassA(impl_->desc.identifier.c_str(), nullptr);
+        }
+    }
 
-    void Window::Create(WindowDesc desc)
+    void Window::Create(const WindowDesc &desc)
     {
         impl_ = std::make_unique<Impl>(desc);
         WNDCLASSEXA wc{
@@ -49,20 +85,47 @@ namespace nw
             throw std::runtime_error("RegisterClassEx failed!");
         }
 
-        RECT rc = {0, 0, desc.size.width, desc.size.height};
+        WindowStyleAndSize wss = GetStyleAndSize(desc.mode, desc.size);
 
-        AdjustWindowRectEx(&rc, WS_OVERLAPPEDWINDOW, FALSE, WS_EX_OVERLAPPEDWINDOW);
+        impl_->state.fullscreen = desc.mode;
 
-        impl_->hwnd = CreateWindowExA(WS_EX_OVERLAPPEDWINDOW, desc.identifier.c_str(), desc.title.c_str(), WS_OVERLAPPEDWINDOW, desc.position.x, desc.position.y, rc.right - rc.left, rc.bottom - rc.top, nullptr, nullptr, nullptr, impl_.get());
+        RECT rc = {0, 0, wss.width, wss.height};
+
+        AdjustWindowRectEx(&rc, wss.style, FALSE, wss.exStyle);
+
+        impl_->hwnd = CreateWindowExA(wss.exStyle, desc.identifier.c_str(), desc.title.c_str(), wss.style,
+                                      desc.position.x, desc.position.y, rc.right - rc.left, rc.bottom - rc.top,
+                                      nullptr, nullptr, nullptr, impl_.get());
 
         if (!impl_->hwnd)
         {
             throw std::runtime_error("CreateWindowEx failed!");
         }
 
-        ShowWindow(impl_->hwnd, SW_SHOWDEFAULT);
+        ShowWindow(impl_->hwnd, wss.cmdShow);
 
         GetClientRect(impl_->hwnd, &rc);
+        // Use rc to create GraphicsAPI Viewport
+    }
+
+    bool Window::Update()
+    {
+        MSG msg;
+        while (PeekMessage(&msg, NULL, NULL, NULL, PM_REMOVE))
+        {
+            if (msg.message == WM_QUIT)
+            {
+                return false;
+            }
+
+            TranslateMessage(&msg);
+            DispatchMessageA(&msg);
+        }
+
+        InvalidateRect(impl_->hwnd, NULL, true);
+        UpdateWindow(impl_->hwnd);
+
+        return true;
     }
 
     LRESULT Window::Impl::s_WndProc(HWND hwnd, uint32_t msg, WPARAM wParam, LPARAM lParam)
@@ -190,24 +253,26 @@ namespace nw
         {
             if (wParam == VK_RETURN && (lParam & 0x60000000) == 0x20000000)
             {
-                if (impl->state.fullscreen)
-                {
-                    SetWindowLongPtr(hwnd, GWL_STYLE, WS_OVERLAPPEDWINDOW);
-                    SetWindowLongPtr(hwnd, GWL_EXSTYLE, 0);
+                WindowMode target = impl->state.fullscreen == WindowMode::FullScreen
+                                        ? WindowMode::Windowed
+                                        : WindowMode::FullScreen;
 
-                    ShowWindow(hwnd, SW_SHOWNORMAL);
-                    SetWindowPos(hwnd, HWND_TOP, 0, 0, impl->desc.size.width, impl->desc.size.height, SWP_NOMOVE | SWP_NOZORDER | SWP_FRAMECHANGED);
-                }
-                else
-                {
-                    SetWindowLongPtr(hwnd, GWL_STYLE, WS_POPUP);
-                    SetWindowLongPtr(hwnd, GWL_EXSTYLE, WS_EX_TOPMOST);
+                WindowStyleAndSize wss = GetStyleAndSize(target, impl->desc.size);
+                wss.cmdShow = SW_SHOWNORMAL;
+                UINT flags = SWP_NOMOVE | SWP_NOZORDER | SWP_FRAMECHANGED;
 
-                    SetWindowPos(hwnd, HWND_TOP, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_FRAMECHANGED);
-                    ShowWindow(hwnd, SW_SHOWMAXIMIZED);
+                if (target == WindowMode::FullScreen)
+                {
+                    flags |= SWP_NOSIZE;
+                    wss.cmdShow = SW_SHOWMAXIMIZED;
                 }
 
-                impl->state.fullscreen = !impl->state.fullscreen;
+                SetWindowLongPtr(hwnd, GWL_STYLE, wss.style);
+                SetWindowLongPtr(hwnd, GWL_EXSTYLE, wss.exStyle);
+                SetWindowPos(hwnd, HWND_TOP, 0, 0, wss.width, wss.height, flags);
+                ShowWindow(hwnd, wss.cmdShow);
+
+                impl->state.fullscreen = target;
             }
             break;
         }

@@ -4,10 +4,9 @@
 
 namespace nw
 {
-    enum class WindowMode
+    enum class WindowMode : uint8_t
     {
         Windowed = 0,
-        WindowedFullScreen,
         FullScreen,
     };
 

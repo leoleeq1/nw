@@ -52,8 +52,10 @@ add_library(
 
 target_include_directories(${PROJECT_NAME} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
-set_target_properties(nw PROPERTIES
-    VS_GLOBAL_RunCodeAnalysis true
-    VS_GLOBAL_EnableMicrosoftCodeAnalysis true
-    VS_GLOBAL_EnableClangTidyCodeAnalysis true
-)
+if (CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
+    set_target_properties(nw PROPERTIES
+        VS_GLOBAL_RunCodeAnalysis true
+        VS_GLOBAL_EnableMicrosoftCodeAnalysis true
+        VS_GLOBAL_EnableClangTidyCodeAnalysis true
+    )
+endif()

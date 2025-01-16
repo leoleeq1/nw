@@ -1,0 +1,48 @@
+---
+BasedOnStyle: Microsoft
+AccessModifierOffset: -1
+AlignAfterOpenBracket: DontAlign
+AlignArrayOfStructures: Left
+AlignEscapedNewlines: Left
+AllowShortBlocksOnASingleLine: Empty
+AllowShortFunctionsOnASingleLine: Inline
+AllowShortIfStatementsOnASingleLine: WithoutElse
+BraceWrapping:
+  AfterCaseLabel: true
+  AfterClass: true
+  AfterControlStatement: Always
+  AfterEnum: true
+  AfterFunction: true
+  AfterNamespace: true
+  AfterObjCDeclaration: true
+  AfterStruct: true
+  AfterUnion: true
+  AfterExternBlock: true
+  BeforeCatch: true
+  BeforeElse: true
+  BeforeLambdaBody: false
+  BeforeWhile: false
+  IndentBraces: false
+  SplitEmptyFunction: true
+  SplitEmptyRecord: true
+  SplitEmptyNamespace: true
+AlwaysBreakAfterReturnType: None
+BreakBeforeBinaryOperators: NonAssignment
+ColumnLimit: 80
+ConstructorInitializerIndentWidth: 2
+ContinuationIndentWidth: 2
+ForEachMacros:
+  - foreach
+  - BOOST_FOREACH
+IndentCaseLabels: true
+IndentPPDirectives: AfterHash
+IndentWidth: 2
+KeepEmptyLinesAtTheStartOfBlocks: false
+# KeepEmptyLines:
+#   AtStartOfBlock: false
+#   AtStartOfFile: false
+PackConstructorInitializers: CurrentLine
+ReferenceAlignment: Left
+ShortNamespaceLines: 0
+SpaceAfterTemplateKeyword: false
+TabWidth: 2

@@ -3,17 +3,35 @@ Checks: "*,
         -abseil-*,
         -altera-*,
         -android-*,
+        -cppcoreguidelines-avoid-magic-numbers,
+        -cppcoreguidelines-non-private-member-variables-in-classes,
+        -cppcoreguidelines-pro-type-reinterpret-cast,
         -fuchsia-*,
         -google-*,
         -llvm*,
-        -modernize-use-trailing-return-type,
-        -zircon-*,
-        -readability-else-after-return,
-        -readability-static-accessed-through-instance,
-        -readability-avoid-const-params-in-decls,
-        -cppcoreguidelines-non-private-member-variables-in-classes,
         -misc-non-private-member-variables-in-classes,
+        -misc-include-cleaner,
+        -modernize-use-trailing-return-type,
+        -performance-no-int-to-ptr,
+        -readability-avoid-const-params-in-decls,
+        -readability-else-after-return,
+        -readability-function-cognitive-complexity,
+        -readability-identifier-length,
+        -readability-implicit-bool-conversion,
+        -readability-magic-numbers,
+        -readability-static-accessed-through-instance,
+        -zircon-*,
 "
+
+CheckOptions:
+    - key: cppcoreguidelines-special-member-functions.AllowSoleDefaultDtor
+      value: true
+    - key: cppcoreguidelines-special-member-functions.AllowMissingMoveFunctionsWhenCopyIsDeleted
+      value: true
+    - key: hicpp-special-member-functions.AllowSoleDefaultDtor
+      value: true
+    - key: hicpp-special-member-functions.AllowMissingMoveFunctionsWhenCopyIsDeleted
+      value: true
 WarningsAsErrors: ''
 HeaderFilterRegex: ''
 FormatStyle: none

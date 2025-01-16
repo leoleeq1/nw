@@ -6,17 +6,17 @@
 
 namespace nw
 {
-    class Window
-    {
-    public:
-        Window();
-        ~Window();
+class Window
+{
+ public:
+  Window();
+  ~Window();
 
-        void Create(const WindowDesc &desc);
-        bool Update();
+  void Create(const WindowDesc& desc);
+  bool Update();
 
-    private:
-        struct Impl;
-        std::unique_ptr<Impl> impl_;
-    };
-}
+ private:
+  struct Impl;
+  std::unique_ptr<Impl> impl_;
+};
+} // namespace nw

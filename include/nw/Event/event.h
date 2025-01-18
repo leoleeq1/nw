@@ -81,7 +81,7 @@ template<typename T> class EventHandler : public EventHandlerBase
 
   [[nodiscard]] size_t GetIdInternal() const override
   {
-    return reinterpret_cast<size_t>(handleFn_.target_type().hash_code());
+    return handleFn_.target_type().hash_code();
   }
 
   HandleFn handleFn_;

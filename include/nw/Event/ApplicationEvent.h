@@ -1,4 +1,5 @@
 #pragma once
+#include "../window_desc.h"
 #include "event.h"
 
 namespace nw
@@ -6,9 +7,12 @@ namespace nw
 class WindowCreatedEvent : public Event
 {
  public:
-  EventType GetEventType() const override { return EventType::WindowCreated; }
+  [[nodiscard]] EventType GetEventType() const override
+  {
+    return EventType::WindowCreated;
+  }
 
-  EventCategory GetEventCategory() const override
+  [[nodiscard]] EventCategory GetEventCategory() const override
   {
     return EventCategory::Application;
   }
@@ -19,9 +23,12 @@ class WindowCreatedEvent : public Event
 class WindowClosedEvent : public Event
 {
  public:
-  EventType GetEventType() const override { return EventType::WindowClosed; }
+  [[nodiscard]] EventType GetEventType() const override
+  {
+    return EventType::WindowClosed;
+  }
 
-  EventCategory GetEventCategory() const override
+  [[nodiscard]] EventCategory GetEventCategory() const override
   {
     return EventCategory::Application;
   }
@@ -32,9 +39,12 @@ class WindowClosedEvent : public Event
 class WindowPaintEvent : public Event
 {
  public:
-  EventType GetEventType() const override { return EventType::WindowPaint; }
+  [[nodiscard]] EventType GetEventType() const override
+  {
+    return EventType::WindowPaint;
+  }
 
-  EventCategory GetEventCategory() const override
+  [[nodiscard]] EventCategory GetEventCategory() const override
   {
     return EventCategory::Application;
   }
@@ -45,9 +55,12 @@ class WindowPaintEvent : public Event
 class WindowMinimizedEvent : public Event
 {
  public:
-  EventType GetEventType() const override { return EventType::WindowMinimized; }
+  [[nodiscard]] EventType GetEventType() const override
+  {
+    return EventType::WindowMinimized;
+  }
 
-  EventCategory GetEventCategory() const override
+  [[nodiscard]] EventCategory GetEventCategory() const override
   {
     return EventCategory::Application;
   }
@@ -58,9 +71,12 @@ class WindowMinimizedEvent : public Event
 class WindowMaximizedEvent : public Event
 {
  public:
-  EventType GetEventType() const override { return EventType::WindowMaximized; }
+  [[nodiscard]] EventType GetEventType() const override
+  {
+    return EventType::WindowMaximized;
+  }
 
-  EventCategory GetEventCategory() const override
+  [[nodiscard]] EventCategory GetEventCategory() const override
   {
     return EventCategory::Application;
   }
@@ -71,12 +87,17 @@ class WindowMaximizedEvent : public Event
 class WindowResizeEvent : public Event
 {
  public:
-  [[nodiscard]] int32_t GetWidth() const { return width_; }
-  [[nodiscard]] int32_t GetHeight() const { return height_; }
+  explicit WindowResizeEvent(WindowSize size) : size_(size) {}
 
-  EventType GetEventType() const override { return EventType::WindowResize; }
+  [[nodiscard]] int32_t GetWidth() const { return size_.width; }
+  [[nodiscard]] int32_t GetHeight() const { return size_.height; }
 
-  EventCategory GetEventCategory() const override
+  [[nodiscard]] EventType GetEventType() const override
+  {
+    return EventType::WindowResize;
+  }
+
+  [[nodiscard]] EventCategory GetEventCategory() const override
   {
     return EventCategory::Application;
   }
@@ -84,16 +105,18 @@ class WindowResizeEvent : public Event
   static constexpr EventType Type = EventType::WindowResize;
 
  private:
-  int32_t width_;
-  int32_t height_;
+  WindowSize size_;
 };
 
 class WindowActivatedEvent : public Event
 {
  public:
-  EventType GetEventType() const override { return EventType::WindowActivated; }
+  [[nodiscard]] EventType GetEventType() const override
+  {
+    return EventType::WindowActivated;
+  }
 
-  EventCategory GetEventCategory() const override
+  [[nodiscard]] EventCategory GetEventCategory() const override
   {
     return EventCategory::Application;
   }
@@ -104,12 +127,12 @@ class WindowActivatedEvent : public Event
 class WindowDeactivatedEvent : public Event
 {
  public:
-  EventType GetEventType() const override
+  [[nodiscard]] EventType GetEventType() const override
   {
     return EventType::WindowDeactivated;
   }
 
-  EventCategory GetEventCategory() const override
+  [[nodiscard]] EventCategory GetEventCategory() const override
   {
     return EventCategory::Application;
   }
@@ -120,9 +143,12 @@ class WindowDeactivatedEvent : public Event
 class WindowSuspendedEvent : public Event
 {
  public:
-  EventType GetEventType() const override { return EventType::WindowSuspended; }
+  [[nodiscard]] EventType GetEventType() const override
+  {
+    return EventType::WindowSuspended;
+  }
 
-  EventCategory GetEventCategory() const override
+  [[nodiscard]] EventCategory GetEventCategory() const override
   {
     return EventCategory::Application;
   }
@@ -133,9 +159,12 @@ class WindowSuspendedEvent : public Event
 class WindowResumedEvent : public Event
 {
  public:
-  EventType GetEventType() const override { return EventType::WindowResumed; }
+  [[nodiscard]] EventType GetEventType() const override
+  {
+    return EventType::WindowResumed;
+  }
 
-  EventCategory GetEventCategory() const override
+  [[nodiscard]] EventCategory GetEventCategory() const override
   {
     return EventCategory::Application;
   }

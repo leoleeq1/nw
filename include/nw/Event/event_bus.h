@@ -16,9 +16,10 @@ class EventBus
   EventBus& operator=(const EventBus&) = delete;
   ~EventBus() = default;
 
-  void Push(std::unique_ptr<Event>&& e);
+  void Push(std::unique_ptr<Event> e);
   void Dispatch();
-  void Subscribe(EventType type, std::unique_ptr<EventHandlerBase>&& handler);
+  void SendEvent(std::unique_ptr<Event> e);
+  void Subscribe(EventType type, std::unique_ptr<EventHandlerBase> handler);
   void Unsubscribe(EventType type, size_t handlerId);
 
  private:

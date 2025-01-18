@@ -1,3 +1,5 @@
+#include "nw/Event/ApplicationEvent.h"
+#include "nw/Event/event_bus.h"
 #include "nw/window.h"
 #include "nw/window_desc.h"
 
@@ -9,10 +11,10 @@ namespace nw
 {
 struct WindowState
 {
+  WindowMode fullscreen = WindowMode::Windowed;
   bool sizemoving = false;
   bool suspended = false;
   bool minimized = false;
-  WindowMode fullscreen = WindowMode::Windowed;
 };
 
 struct WindowStyleAndSize
@@ -50,6 +52,7 @@ struct Window::Impl
     HWND hwnd, uint32_t msg, WPARAM wParam, LPARAM lParam);
 
   WindowDesc desc;
+  EventBus *eventBus;
   HWND hwnd;
   WindowState state;
 };
@@ -63,9 +66,9 @@ Window::~Window()
   }
 }
 
-void Window::Create(const WindowDesc& desc)
+void Window::Create(const WindowDesc& desc, EventBus *eventBus)
 {
-  impl_ = std::make_unique<Impl>(desc);
+  impl_ = std::make_unique<Impl>(desc, eventBus);
   const WNDCLASSEXA wc{
     .cbSize = sizeof(WNDCLASSEX),
     .style = CS_HREDRAW | CS_VREDRAW,
@@ -136,27 +139,19 @@ LRESULT Window::Impl::s_WndProc(
 
   switch (msg)
   {
-    case WM_CREATE:
-    {
-      if (lParam)
-      {
-        auto *lpcs = reinterpret_cast<LPCREATESTRUCT>(lParam);
-        SetWindowLongPtr(hwnd, GWLP_USERDATA,
-          reinterpret_cast<LONG_PTR>(lpcs->lpCreateParams));
-      }
-      break;
-    }
     case WM_NCCREATE:
     {
       auto *lpcs = reinterpret_cast<LPCREATESTRUCT>(lParam);
       SetWindowLongPtr(
         hwnd, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(lpcs->lpCreateParams));
+      impl->eventBus->Push(std::make_unique<WindowCreatedEvent>());
       break;
     }
     case WM_PAINT:
     {
       PAINTSTRUCT ps;
       std::ignore = BeginPaint(hwnd, &ps);
+      impl->eventBus->SendEvent(std::make_unique<WindowCreatedEvent>());
       EndPaint(hwnd, &ps);
       break;
     }
@@ -169,7 +164,7 @@ LRESULT Window::Impl::s_WndProc(
           impl->state.minimized = true;
           if (!impl->state.suspended)
           {
-            // OnSuspend
+            impl->eventBus->Push(std::make_unique<WindowSuspendedEvent>());
           }
           impl->state.suspended = true;
         }
@@ -179,12 +174,14 @@ LRESULT Window::Impl::s_WndProc(
         impl->state.minimized = false;
         if (impl->state.suspended)
         {
-          // OnResume
+          impl->eventBus->Push(std::make_unique<WindowResumedEvent>());
         }
         impl->state.suspended = false;
       }
       else if (!impl->state.sizemoving)
       {
+        impl->eventBus->Push(std::make_unique<WindowResizeEvent>(
+          WindowSize(LOWORD(lParam), HIWORD(lParam))));
       }
       break;
     }
@@ -196,6 +193,10 @@ LRESULT Window::Impl::s_WndProc(
     case WM_EXITSIZEMOVE:
     {
       impl->state.sizemoving = false;
+      RECT rc;
+      GetClientRect(hwnd, &rc);
+      impl->eventBus->Push(std::make_unique<WindowResizeEvent>(
+        WindowSize(rc.right - rc.left, rc.bottom - rc.top)));
       break;
     }
     case WM_GETMINMAXINFO:
@@ -214,11 +215,11 @@ LRESULT Window::Impl::s_WndProc(
     {
       if (wParam)
       {
-        // OnActivated
+        impl->eventBus->Push(std::make_unique<WindowActivatedEvent>());
       }
       else
       {
-        // OnDeactivated
+        impl->eventBus->Push(std::make_unique<WindowDeactivatedEvent>());
       }
       break;
     }
@@ -230,7 +231,7 @@ LRESULT Window::Impl::s_WndProc(
         {
           if (!impl->state.suspended)
           {
-            // OnSuspend
+            impl->eventBus->Push(std::make_unique<WindowSuspendedEvent>());
           }
           impl->state.suspended = true;
           return TRUE;
@@ -241,7 +242,7 @@ LRESULT Window::Impl::s_WndProc(
           {
             if (impl->state.suspended)
             {
-              // OnResume
+              impl->eventBus->Push(std::make_unique<WindowResumedEvent>());
             }
             impl->state.suspended = false;
           }
@@ -259,6 +260,7 @@ LRESULT Window::Impl::s_WndProc(
     }
     case WM_CLOSE:
     {
+      impl->eventBus->Push(std::make_unique<WindowClosedEvent>());
       break;
     }
     case WM_SYSKEYDOWN:

@@ -6,7 +6,7 @@ namespace nw
 {
 enum class EventType : uint8_t
 {
-  None = 0,
+  None = 0U,
   WindowCreated,
   WindowClosed,
   WindowPaint,
@@ -28,10 +28,10 @@ enum class EventType : uint8_t
 
 enum class EventCategory : uint8_t
 {
-  None = 0,
-  Application = 1 << 0,
-  Keyboard = 1 << 1,
-  Mouse = 1 << 2,
+  None = 0U,
+  Application = 1U << 0U,
+  Keyboard = 1U << 1U,
+  Mouse = 1U << 2U,
 
   Input = Keyboard | Mouse,
 };

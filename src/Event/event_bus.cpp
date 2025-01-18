@@ -7,7 +7,7 @@
 
 namespace nw
 {
-void EventBus::Push(std::unique_ptr<Event>&& e)
+void EventBus::Push(std::unique_ptr<Event> e)
 {
   events_.push_back(std::move(e));
 }
@@ -30,8 +30,23 @@ void EventBus::Dispatch()
   }
 }
 
+void EventBus::SendEvent(std::unique_ptr<Event> e)
+{
+  auto it = subscribers_.find(e->GetEventType());
+  if (it == subscribers_.end())
+  {
+    return;
+  }
+
+  auto& [_, handlers] = *it;
+  for (auto& handler : handlers)
+  {
+    handler->Exec(*e);
+  }
+}
+
 void EventBus::Subscribe(
-  EventType type, std::unique_ptr<EventHandlerBase>&& handler)
+  EventType type, std::unique_ptr<EventHandlerBase> handler)
 {
   auto it = subscribers_.find(type);
   if (it == subscribers_.end())

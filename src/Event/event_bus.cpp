@@ -28,6 +28,8 @@ void EventBus::Dispatch()
       handler->Exec(*e);
     }
   }
+
+  events_.clear();
 }
 
 void EventBus::SendEvent(std::unique_ptr<Event> e)

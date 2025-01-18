@@ -1,6 +1,6 @@
 #pragma once
-#include "../window_desc.h"
 #include "event.h"
+#include "nw/window_desc.h"
 
 namespace nw
 {

@@ -152,7 +152,7 @@ LRESULT Window::Impl::s_WndProc(
     {
       PAINTSTRUCT ps;
       std::ignore = BeginPaint(hwnd, &ps);
-      impl->eventBus->SendEvent(std::make_unique<WindowCreatedEvent>());
+      impl->eventBus->SendEvent(std::make_unique<WindowPaintEvent>());
       EndPaint(hwnd, &ps);
       break;
     }

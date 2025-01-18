@@ -143,8 +143,8 @@ LRESULT Window::Impl::s_WndProc(
     case WM_NCCREATE:
     {
       auto *lpcs = reinterpret_cast<LPCREATESTRUCT>(lParam);
-      SetWindowLongPtr(
-        hwnd, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(lpcs->lpCreateParams));
+      impl = reinterpret_cast<Impl *>(lpcs->lpCreateParams);
+      SetWindowLongPtr(hwnd, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(impl));
       impl->eventBus->Push(std::make_unique<WindowCreatedEvent>());
       break;
     }

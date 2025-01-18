@@ -6,12 +6,9 @@ namespace nw
 class WindowCreatedEvent : public Event
 {
  public:
-  virtual EventType GetEventType() const override
-  {
-    return EventType::WindowCreated;
-  }
+  EventType GetEventType() const override { return EventType::WindowCreated; }
 
-  virtual EventCategory GetEventCategory() const override
+  EventCategory GetEventCategory() const override
   {
     return EventCategory::Application;
   }
@@ -22,12 +19,9 @@ class WindowCreatedEvent : public Event
 class WindowClosedEvent : public Event
 {
  public:
-  virtual EventType GetEventType() const override
-  {
-    return EventType::WindowClosed;
-  }
+  EventType GetEventType() const override { return EventType::WindowClosed; }
 
-  virtual EventCategory GetEventCategory() const override
+  EventCategory GetEventCategory() const override
   {
     return EventCategory::Application;
   }
@@ -38,12 +32,9 @@ class WindowClosedEvent : public Event
 class WindowPaintEvent : public Event
 {
  public:
-  virtual EventType GetEventType() const override
-  {
-    return EventType::WindowPaint;
-  }
+  EventType GetEventType() const override { return EventType::WindowPaint; }
 
-  virtual EventCategory GetEventCategory() const override
+  EventCategory GetEventCategory() const override
   {
     return EventCategory::Application;
   }
@@ -54,12 +45,9 @@ class WindowPaintEvent : public Event
 class WindowMinimizedEvent : public Event
 {
  public:
-  virtual EventType GetEventType() const override
-  {
-    return EventType::WindowMinimized;
-  }
+  EventType GetEventType() const override { return EventType::WindowMinimized; }
 
-  virtual EventCategory GetEventCategory() const override
+  EventCategory GetEventCategory() const override
   {
     return EventCategory::Application;
   }
@@ -70,12 +58,9 @@ class WindowMinimizedEvent : public Event
 class WindowMaximizedEvent : public Event
 {
  public:
-  virtual EventType GetEventType() const override
-  {
-    return EventType::WindowMaximized;
-  }
+  EventType GetEventType() const override { return EventType::WindowMaximized; }
 
-  virtual EventCategory GetEventCategory() const override
+  EventCategory GetEventCategory() const override
   {
     return EventCategory::Application;
   }
@@ -86,15 +71,12 @@ class WindowMaximizedEvent : public Event
 class WindowResizeEvent : public Event
 {
  public:
-  [[nodiscard]] inline int32_t GetWidth() const { return width_; }
-  [[nodiscard]] inline int32_t GetHeight() const { return height_; }
+  [[nodiscard]] int32_t GetWidth() const { return width_; }
+  [[nodiscard]] int32_t GetHeight() const { return height_; }
 
-  virtual EventType GetEventType() const override
-  {
-    return EventType::WindowResize;
-  }
+  EventType GetEventType() const override { return EventType::WindowResize; }
 
-  virtual EventCategory GetEventCategory() const override
+  EventCategory GetEventCategory() const override
   {
     return EventCategory::Application;
   }
@@ -109,12 +91,9 @@ class WindowResizeEvent : public Event
 class WindowActivatedEvent : public Event
 {
  public:
-  virtual EventType GetEventType() const override
-  {
-    return EventType::WindowActivated;
-  }
+  EventType GetEventType() const override { return EventType::WindowActivated; }
 
-  virtual EventCategory GetEventCategory() const override
+  EventCategory GetEventCategory() const override
   {
     return EventCategory::Application;
   }
@@ -125,12 +104,12 @@ class WindowActivatedEvent : public Event
 class WindowDeactivatedEvent : public Event
 {
  public:
-  virtual EventType GetEventType() const override
+  EventType GetEventType() const override
   {
     return EventType::WindowDeactivated;
   }
 
-  virtual EventCategory GetEventCategory() const override
+  EventCategory GetEventCategory() const override
   {
     return EventCategory::Application;
   }
@@ -141,12 +120,9 @@ class WindowDeactivatedEvent : public Event
 class WindowSuspendedEvent : public Event
 {
  public:
-  virtual EventType GetEventType() const override
-  {
-    return EventType::WindowSuspended;
-  }
+  EventType GetEventType() const override { return EventType::WindowSuspended; }
 
-  virtual EventCategory GetEventCategory() const override
+  EventCategory GetEventCategory() const override
   {
     return EventCategory::Application;
   }
@@ -157,12 +133,9 @@ class WindowSuspendedEvent : public Event
 class WindowResumedEvent : public Event
 {
  public:
-  virtual EventType GetEventType() const override
-  {
-    return EventType::WindowResumed;
-  }
+  EventType GetEventType() const override { return EventType::WindowResumed; }
 
-  virtual EventCategory GetEventCategory() const override
+  EventCategory GetEventCategory() const override
   {
     return EventCategory::Application;
   }

@@ -47,9 +47,9 @@ void EventBus::SendEvent(std::unique_ptr<Event> e)
   }
 }
 
-void EventBus::Subscribe(
-  EventType type, std::unique_ptr<EventHandlerBase> handler)
+void EventBus::Subscribe(std::unique_ptr<EventHandlerBase> handler)
 {
+  EventType type = handler->GetEventType();
   auto it = subscribers_.find(type);
   if (it == subscribers_.end())
   {

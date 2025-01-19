@@ -55,12 +55,16 @@ class EventHandlerBase
   virtual ~EventHandlerBase() = default;
 
   void Exec(Event& e) const { Call(e); }
-
   [[nodiscard]] size_t GetId() const { return GetIdInternal(); }
+  [[nodiscard]] EventType GetEventType() const
+  {
+    return GetEventTypeInternal();
+  }
 
  private:
   virtual void Call(Event& e) const = 0;
   [[nodiscard]] virtual size_t GetIdInternal() const = 0;
+  [[nodiscard]] virtual EventType GetEventTypeInternal() const = 0;
 };
 
 template<typename T> class EventHandler : public EventHandlerBase
@@ -82,6 +86,11 @@ template<typename T> class EventHandler : public EventHandlerBase
   [[nodiscard]] size_t GetIdInternal() const override
   {
     return handleFn_.target_type().hash_code();
+  }
+
+  [[nodiscard]] EventType GetEventTypeInternal() const override
+  {
+    return T::Type;
   }
 
   HandleFn handleFn_;

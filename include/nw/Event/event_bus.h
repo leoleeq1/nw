@@ -19,7 +19,7 @@ class EventBus
   void Push(std::unique_ptr<Event> e);
   void Dispatch();
   void SendEvent(std::unique_ptr<Event> e);
-  void Subscribe(EventType type, std::unique_ptr<EventHandlerBase> handler);
+  void Subscribe(std::unique_ptr<EventHandlerBase> handler);
   void Unsubscribe(EventType type, size_t handlerId);
 
  private:

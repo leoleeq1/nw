@@ -145,7 +145,7 @@ LRESULT Window::Impl::s_WndProc(
       auto *lpcs = reinterpret_cast<LPCREATESTRUCT>(lParam);
       impl = reinterpret_cast<Impl *>(lpcs->lpCreateParams);
       SetWindowLongPtr(hwnd, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(impl));
-      impl->eventBus->Push(std::make_unique<WindowCreatedEvent>());
+      impl->eventBus->SendEvent(std::make_unique<WindowCreatedEvent>());
       break;
     }
     case WM_PAINT:
@@ -165,7 +165,7 @@ LRESULT Window::Impl::s_WndProc(
           impl->state.minimized = true;
           if (!impl->state.suspended)
           {
-            impl->eventBus->Push(std::make_unique<WindowSuspendedEvent>());
+            impl->eventBus->SendEvent(std::make_unique<WindowSuspendedEvent>());
           }
           impl->state.suspended = true;
         }
@@ -175,13 +175,13 @@ LRESULT Window::Impl::s_WndProc(
         impl->state.minimized = false;
         if (impl->state.suspended)
         {
-          impl->eventBus->Push(std::make_unique<WindowResumedEvent>());
+          impl->eventBus->SendEvent(std::make_unique<WindowResumedEvent>());
         }
         impl->state.suspended = false;
       }
       else if (!impl->state.sizemoving)
       {
-        impl->eventBus->Push(std::make_unique<WindowResizeEvent>(
+        impl->eventBus->SendEvent(std::make_unique<WindowResizeEvent>(
           WindowSize(LOWORD(lParam), HIWORD(lParam))));
       }
       break;
@@ -196,7 +196,7 @@ LRESULT Window::Impl::s_WndProc(
       impl->state.sizemoving = false;
       RECT rc;
       GetClientRect(hwnd, &rc);
-      impl->eventBus->Push(std::make_unique<WindowResizeEvent>(
+      impl->eventBus->SendEvent(std::make_unique<WindowResizeEvent>(
         WindowSize(rc.right - rc.left, rc.bottom - rc.top)));
       break;
     }
@@ -216,11 +216,11 @@ LRESULT Window::Impl::s_WndProc(
     {
       if (wParam)
       {
-        impl->eventBus->Push(std::make_unique<WindowActivatedEvent>());
+        impl->eventBus->SendEvent(std::make_unique<WindowActivatedEvent>());
       }
       else
       {
-        impl->eventBus->Push(std::make_unique<WindowDeactivatedEvent>());
+        impl->eventBus->SendEvent(std::make_unique<WindowDeactivatedEvent>());
       }
       break;
     }
@@ -232,7 +232,7 @@ LRESULT Window::Impl::s_WndProc(
         {
           if (!impl->state.suspended)
           {
-            impl->eventBus->Push(std::make_unique<WindowSuspendedEvent>());
+            impl->eventBus->SendEvent(std::make_unique<WindowSuspendedEvent>());
           }
           impl->state.suspended = true;
           return TRUE;
@@ -243,7 +243,7 @@ LRESULT Window::Impl::s_WndProc(
           {
             if (impl->state.suspended)
             {
-              impl->eventBus->Push(std::make_unique<WindowResumedEvent>());
+              impl->eventBus->SendEvent(std::make_unique<WindowResumedEvent>());
             }
             impl->state.suspended = false;
           }
@@ -261,7 +261,7 @@ LRESULT Window::Impl::s_WndProc(
     }
     case WM_CLOSE:
     {
-      impl->eventBus->Push(std::make_unique<WindowClosedEvent>());
+      impl->eventBus->SendEvent(std::make_unique<WindowClosedEvent>());
       break;
     }
     case WM_SYSKEYDOWN:

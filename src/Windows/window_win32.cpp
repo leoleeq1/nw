@@ -84,8 +84,7 @@ Window::~Window()
   }
 }
 
-void Window::Create(
-  const WindowDesc& desc, EventBus *eventBus, Bitmap *bitmap = nullptr)
+void Window::Create(const WindowDesc& desc, EventBus *eventBus, Bitmap *bitmap)
 {
   impl_ = std::make_unique<Impl>(desc, eventBus);
   const WNDCLASSEXA wc{

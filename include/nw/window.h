@@ -18,7 +18,8 @@ class Window
   Window(Window&&) = delete;
   Window& operator=(Window&&) = delete;
 
-  void Create(const WindowDesc& desc, EventBus *eventBus, Bitmap *bitmap);
+  void Create(
+    const WindowDesc& desc, EventBus *eventBus, Bitmap *bitmap = nullptr);
   bool Update();
   void SetBitmap(Bitmap *bitmap);
 

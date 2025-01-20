@@ -339,6 +339,7 @@ HBITMAP CreateBitmapObject(HDC memDC, Bitmap *bitmap)
 
 void Window::SetBitmap(Bitmap *bitmap)
 {
+  if (bitmap == nullptr) return;
   if (impl_->bitmap)
   {
     DeleteObject(impl_->bitmap);

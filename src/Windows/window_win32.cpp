@@ -51,12 +51,14 @@ struct Window::Impl
   ~Impl();
   static LRESULT CALLBACK s_WndProc(
     HWND hwnd, uint32_t msg, WPARAM wParam, LPARAM lParam);
+  void CreateDIBitmapObject(WindowSize size);
 
   WindowDesc desc;
   EventBus *eventBus;
   HWND hwnd;
   HDC memDC;
   HBITMAP bitmap;
+  std::byte *surface;
   WindowState state;
 };
 
@@ -64,7 +66,7 @@ Window::Impl::~Impl()
 {
   if (bitmap)
   {
-    DeleteObject(bitmap);
+    DeleteObject(SelectObject(memDC, bitmap));
     bitmap = nullptr;
   }
 
@@ -73,6 +75,36 @@ Window::Impl::~Impl()
     ReleaseDC(nullptr, memDC);
     memDC = nullptr;
   }
+}
+
+void Window::Impl::CreateDIBitmapObject(WindowSize size)
+{
+  if (bitmap)
+  {
+    DeleteObject(SelectObject(memDC, bitmap));
+    bitmap = nullptr;
+  }
+
+  std::byte *pixels = nullptr;
+  BITMAPINFO bmi;
+  memset(&bmi, 0, sizeof(BITMAPINFO));
+  bmi.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+  bmi.bmiHeader.biWidth = size.width;
+  bmi.bmiHeader.biHeight = size.height;
+  bmi.bmiHeader.biPlanes = 1;
+  bmi.bmiHeader.biBitCount = 32;
+  bmi.bmiHeader.biCompression = BI_RGB;
+
+  HBITMAP hbitmap = CreateDIBSection(memDC, &bmi, DIB_RGB_COLORS,
+    reinterpret_cast<void **>(&pixels), nullptr, 0);
+  surface = pixels;
+
+  if (!hbitmap)
+  {
+    throw std::runtime_error("Failed to create surface!");
+  }
+
+  bitmap = reinterpret_cast<HBITMAP>(SelectObject(memDC, hbitmap));
 }
 
 Window::Window() = default;
@@ -84,7 +116,7 @@ Window::~Window()
   }
 }
 
-void Window::Create(const WindowDesc& desc, EventBus *eventBus, Bitmap *bitmap)
+void Window::Create(const WindowDesc& desc, EventBus *eventBus)
 {
   impl_ = std::make_unique<Impl>(desc, eventBus);
   const WNDCLASSEXA wc{
@@ -128,7 +160,9 @@ void Window::Create(const WindowDesc& desc, EventBus *eventBus, Bitmap *bitmap)
   ShowWindow(impl_->hwnd, wss.cmdShow);
 
   GetClientRect(impl_->hwnd, &rc);
-  SetBitmap(bitmap);
+
+  impl_->memDC = CreateCompatibleDC(nullptr);
+  impl_->CreateDIBitmapObject({rc.right - rc.left, rc.bottom - rc.top});
 }
 
 bool Window::Update()
@@ -145,10 +179,12 @@ bool Window::Update()
     DispatchMessageA(&msg);
   }
 
-  InvalidateRect(impl_->hwnd, nullptr, true);
-  UpdateWindow(impl_->hwnd);
-
   return true;
+}
+
+std::byte *Window::GetSurface() noexcept
+{
+  return impl_->surface;
 }
 
 LRESULT Window::Impl::s_WndProc(
@@ -168,9 +204,6 @@ LRESULT Window::Impl::s_WndProc(
     }
     case WM_PAINT:
     {
-      HDC hdc = GetDC(nullptr);
-      BitBlt(hdc, 0, 0, impl->desc.size.width, impl->desc.size.height,
-        impl->memDC, 0, 0, SRCCOPY);
       impl->eventBus->SendEvent(std::make_unique<WindowPaintEvent>());
       break;
     }
@@ -315,43 +348,5 @@ LRESULT Window::Impl::s_WndProc(
       break;
   }
   return DefWindowProc(hwnd, msg, wParam, lParam);
-}
-
-namespace
-{
-HBITMAP CreateBitmapObject(HDC memDC, Bitmap *bitmap)
-{
-  const BitmapDesc desc = bitmap->GetDescriptor();
-
-  BITMAPINFO bmi;
-  memset(&bmi, 0, sizeof(BITMAPINFO));
-  bmi.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
-  bmi.bmiHeader.biWidth = desc.width;
-  bmi.bmiHeader.biHeight = desc.height;
-  bmi.bmiHeader.biPlanes = 1;
-  bmi.bmiHeader.biBitCount = desc.bitCount;
-  bmi.bmiHeader.biCompression = BI_RGB;
-
-  return CreateDIBSection(
-    memDC, &bmi, DIB_RGB_COLORS, bitmap->GetPixels(), nullptr, 0);
-}
-} // namespace
-
-void Window::SetBitmap(Bitmap *bitmap)
-{
-  if (bitmap == nullptr) return;
-  if (impl_->bitmap)
-  {
-    DeleteObject(impl_->bitmap);
-    impl_->bitmap = nullptr;
-  }
-
-  if (impl_->memDC == nullptr)
-  {
-    HDC hdc = GetDC(nullptr);
-    impl_->memDC = CreateCompatibleDC(hdc);
-  }
-
-  impl_->bitmap = CreateBitmapObject(impl_->memDC, bitmap);
 }
 } // namespace nw

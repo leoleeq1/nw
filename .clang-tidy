@@ -6,8 +6,10 @@ Checks: "*,
         -cppcoreguidelines-avoid-magic-numbers,
         -cppcoreguidelines-non-private-member-variables-in-classes,
         -cppcoreguidelines-pro-type-reinterpret-cast,
+        -cppcoreguidelines-special-member-functions,
         -fuchsia-*,
         -google-*,
+        -hicpp-special-member-functions,
         -llvm*,
         -misc-non-private-member-variables-in-classes,
         -misc-include-cleaner,
@@ -23,15 +25,15 @@ Checks: "*,
         -zircon-*,
 "
 
-CheckOptions:
-    - key: cppcoreguidelines-special-member-functions.AllowSoleDefaultDtor
-      value: true
-    - key: cppcoreguidelines-special-member-functions.AllowMissingMoveFunctionsWhenCopyIsDeleted
-      value: true
-    - key: hicpp-special-member-functions.AllowSoleDefaultDtor
-      value: true
-    - key: hicpp-special-member-functions.AllowMissingMoveFunctionsWhenCopyIsDeleted
-      value: true
+# CheckOptions:
+    # - key: cppcoreguidelines-special-member-functions.AllowSoleDefaultDtor
+    #   value: true
+    # - key: cppcoreguidelines-special-member-functions.AllowMissingMoveFunctionsWhenCopyIsDeleted
+    #   value: true
+    # - key: hicpp-special-member-functions.AllowSoleDefaultDtor
+    #   value: true
+    # - key: hicpp-special-member-functions.AllowMissingMoveFunctionsWhenCopyIsDeleted
+    #   value: true
 WarningsAsErrors: ''
 HeaderFilterRegex: '.*'
 FormatStyle: none

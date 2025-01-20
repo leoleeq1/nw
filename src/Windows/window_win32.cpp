@@ -86,7 +86,7 @@ void Window::Impl::CreateDIBitmapObject(WindowSize size)
     bitmap = nullptr;
   }
 
-  std::byte *pixels = nullptr;
+  uint8_t *pixels = nullptr;
   BITMAPINFO bmi;
   memset(&bmi, 0, sizeof(BITMAPINFO));
   bmi.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);

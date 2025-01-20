@@ -1,22 +1,28 @@
 #pragma once
 #include <concepts>
-#include <cstddef>
 #include <cstdint>
 #include <span>
 
 namespace nw
 {
+namespace
+{
+template<typename T>
+concept ByteConvertible = std::convertible_to<T, uint8_t>;
+} // namespace
+
 struct Color
 {
   explicit Color(uint32_t color) : u32(color) {}
-  template<typename T>
-    requires std::is_integral_v<T>
-  explicit Color(std::span<T, 4> rgba)
-    : r(static_cast<std::byte>(rgba[0])),
-      g(static_cast<std::byte>(rgba[1])),
-      b(static_cast<std::byte>(rgba[2])),
-      a(static_cast<std::byte>(rgba[3]))
+  explicit Color(std::span<uint8_t, 4> rgba)
+    : u32(*reinterpret_cast<uint32_t *>(&rgba))
   {
+  }
+  template<ByteConvertible... Args> Color(Args... args)
+  {
+    static_assert(sizeof...(Args) == 4, "Four arguments required!");
+    int index = 0;
+    ((*(&r[index++]) = static_cast<uint8_t>(args)), ...);
   }
 
   union
@@ -24,10 +30,10 @@ struct Color
     uint32_t u32;
     struct
     {
-      std::byte r;
-      std::byte g;
-      std::byte b;
-      std::byte a;
+      uint8_t r;
+      uint8_t g;
+      uint8_t b;
+      uint8_t a;
     };
   };
 };

@@ -48,14 +48,32 @@ WindowStyleAndSize GetStyleAndSize(WindowMode mode, WindowSize defaultSize)
 
 struct Window::Impl
 {
+  ~Impl();
   static LRESULT CALLBACK s_WndProc(
     HWND hwnd, uint32_t msg, WPARAM wParam, LPARAM lParam);
 
   WindowDesc desc;
   EventBus *eventBus;
   HWND hwnd;
+  HDC memDC;
+  HBITMAP bitmap;
   WindowState state;
 };
+
+Window::Impl::~Impl()
+{
+  if (bitmap)
+  {
+    DeleteObject(bitmap);
+    bitmap = nullptr;
+  }
+
+  if (memDC)
+  {
+    ReleaseDC(nullptr, memDC);
+    memDC = nullptr;
+  }
+}
 
 Window::Window() = default;
 Window::~Window()
@@ -66,7 +84,8 @@ Window::~Window()
   }
 }
 
-void Window::Create(const WindowDesc& desc, EventBus *eventBus)
+void Window::Create(
+  const WindowDesc& desc, EventBus *eventBus, Bitmap *bitmap = nullptr)
 {
   impl_ = std::make_unique<Impl>(desc, eventBus);
   const WNDCLASSEXA wc{
@@ -110,7 +129,7 @@ void Window::Create(const WindowDesc& desc, EventBus *eventBus)
   ShowWindow(impl_->hwnd, wss.cmdShow);
 
   GetClientRect(impl_->hwnd, &rc);
-  // Use rc to create GraphicsAPI Viewport
+  SetBitmap(bitmap);
 }
 
 bool Window::Update()
@@ -150,10 +169,10 @@ LRESULT Window::Impl::s_WndProc(
     }
     case WM_PAINT:
     {
-      PAINTSTRUCT ps;
-      std::ignore = BeginPaint(hwnd, &ps);
+      HDC hdc = GetDC(nullptr);
+      BitBlt(hdc, 0, 0, impl->desc.size.width, impl->desc.size.height,
+        impl->memDC, 0, 0, SRCCOPY);
       impl->eventBus->SendEvent(std::make_unique<WindowPaintEvent>());
-      EndPaint(hwnd, &ps);
       break;
     }
     case WM_SIZE:
@@ -297,5 +316,42 @@ LRESULT Window::Impl::s_WndProc(
       break;
   }
   return DefWindowProc(hwnd, msg, wParam, lParam);
+}
+
+namespace
+{
+HBITMAP CreateBitmapObject(HDC memDC, Bitmap *bitmap)
+{
+  const BitmapDesc desc = bitmap->GetDescriptor();
+
+  BITMAPINFO bmi;
+  memset(&bmi, 0, sizeof(BITMAPINFO));
+  bmi.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+  bmi.bmiHeader.biWidth = desc.width;
+  bmi.bmiHeader.biHeight = desc.height;
+  bmi.bmiHeader.biPlanes = 1;
+  bmi.bmiHeader.biBitCount = desc.bitCount;
+  bmi.bmiHeader.biCompression = BI_RGB;
+
+  return CreateDIBSection(
+    memDC, &bmi, DIB_RGB_COLORS, bitmap->GetPixels(), nullptr, 0);
+}
+} // namespace
+
+void Window::SetBitmap(Bitmap *bitmap)
+{
+  if (impl_->bitmap)
+  {
+    DeleteObject(impl_->bitmap);
+    impl_->bitmap = nullptr;
+  }
+
+  if (impl_->memDC == nullptr)
+  {
+    HDC hdc = GetDC(nullptr);
+    impl_->memDC = CreateCompatibleDC(hdc);
+  }
+
+  impl_->bitmap = CreateBitmapObject(impl_->memDC, bitmap);
 }
 } // namespace nw

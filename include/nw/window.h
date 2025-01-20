@@ -1,4 +1,5 @@
 #pragma once
+#include "bitmap.h"
 #include "window_desc.h"
 
 #include <cstdint>
@@ -17,8 +18,9 @@ class Window
   Window(Window&&) = delete;
   Window& operator=(Window&&) = delete;
 
-  void Create(const WindowDesc& desc, EventBus *eventBus);
+  void Create(const WindowDesc& desc, EventBus *eventBus, Bitmap *bitmap);
   bool Update();
+  void SetBitmap(Bitmap *bitmap);
 
  private:
   struct Impl;

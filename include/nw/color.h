@@ -22,7 +22,7 @@ struct Color
   {
     static_assert(sizeof...(Args) == 4, "Four arguments required!");
     int index = 0;
-    ((*(&r[index++]) = static_cast<uint8_t>(args)), ...);
+    ((*(&r + index++) = static_cast<uint8_t>(args)), ...);
   }
 
   union

@@ -1,5 +1,6 @@
 #include "nw/Event/ApplicationEvent.h"
 #include "nw/Event/event_bus.h"
+#include "nw/surface.h"
 #include "nw/window.h"
 #include "nw/window_desc.h"
 
@@ -55,10 +56,10 @@ struct Window::Impl
 
   WindowDesc desc;
   EventBus *eventBus;
+  Surface surface;
   HWND hwnd;
   HDC memDC;
   HBITMAP bitmap;
-  std::byte *surface;
   WindowState state;
 };
 
@@ -97,7 +98,8 @@ void Window::Impl::CreateDIBitmapObject(WindowSize size)
 
   HBITMAP hbitmap = CreateDIBSection(memDC, &bmi, DIB_RGB_COLORS,
     reinterpret_cast<void **>(&pixels), nullptr, 0);
-  surface = pixels;
+
+  surface = {reinterpret_cast<Color *>(pixels), size.width, size.height};
 
   if (!hbitmap)
   {
@@ -182,9 +184,16 @@ bool Window::Update()
   return true;
 }
 
-std::byte *Window::GetSurface() noexcept
+Surface Window::GetSurface() noexcept
 {
   return impl_->surface;
+}
+
+void Window::Present()
+{
+  HDC hdc = GetDC(impl_->hwnd);
+  BitBlt(hdc, 0, 0, impl_->desc.size.width, impl_->desc.size.height,
+    impl_->memDC, 0, 0, SRCCOPY);
 }
 
 LRESULT Window::Impl::s_WndProc(

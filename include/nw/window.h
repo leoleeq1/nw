@@ -1,4 +1,5 @@
 #pragma once
+#include "surface.h"
 #include "window_desc.h"
 
 #include <cstddef>
@@ -20,7 +21,8 @@ class Window
 
   void Create(const WindowDesc& desc, EventBus *eventBus);
   bool Update();
-  std::byte *GetSurface() noexcept;
+  Surface GetSurface() noexcept;
+  void Present();
 
  private:
   struct Impl;

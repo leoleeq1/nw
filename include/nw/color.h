@@ -13,6 +13,7 @@ concept ByteConvertible = std::convertible_to<T, uint8_t>;
 
 struct Color
 {
+  Color() : u32(0U) {}
   explicit Color(uint32_t color) : u32(color) {}
   explicit Color(std::span<uint8_t, 4> rgba)
     : u32(*reinterpret_cast<uint32_t *>(&rgba))

@@ -52,53 +52,40 @@ struct Window::Impl
   ~Impl();
   static LRESULT CALLBACK s_WndProc(
     HWND hwnd, uint32_t msg, WPARAM wParam, LPARAM lParam);
-  void CreateDIBitmapObject(WindowSize size);
+  void CreateSurface(WindowSize size);
+  void Release();
 
   WindowDesc desc;
   EventBus *eventBus;
   Surface surface;
   HWND hwnd;
+  HDC screenDC;
   HDC memDC;
-  HBITMAP bitmap;
+  HBITMAP oldBitmap;
   WindowState state;
 };
 
 Window::Impl::~Impl()
 {
-  if (bitmap)
-  {
-    DeleteObject(SelectObject(memDC, bitmap));
-    bitmap = nullptr;
-  }
-
-  if (memDC)
-  {
-    ReleaseDC(nullptr, memDC);
-    memDC = nullptr;
-  }
+  Release();
 }
 
-void Window::Impl::CreateDIBitmapObject(WindowSize size)
+void Window::Impl::CreateSurface(WindowSize size)
 {
-  if (bitmap)
-  {
-    DeleteObject(SelectObject(memDC, bitmap));
-    bitmap = nullptr;
-  }
+  Release();
+
+  screenDC = GetDC(hwnd);
+  memDC = CreateCompatibleDC(screenDC);
 
   uint8_t *pixels = nullptr;
-  BITMAPV5HEADER bmi;
-  memset(&bmi, 0, sizeof(bmi));
-  bmi.bV5Size = sizeof(bmi);
-  bmi.bV5Width = size.width;
-  bmi.bV5Height = size.height;
-  bmi.bV5Planes = 1;
-  bmi.bV5BitCount = 32;
-  bmi.bV5Compression = BI_BITFIELDS;
-  bmi.bV5AlphaMask = 0xFF000000;
-  bmi.bV5BlueMask = 0x00FF0000;
-  bmi.bV5GreenMask = 0x0000FF00;
-  bmi.bV5RedMask = 0x000000FF;
+  BITMAPINFO bmi;
+  memset(&bmi, 0, sizeof(BITMAPINFO));
+  bmi.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+  bmi.bmiHeader.biWidth = size.width;
+  bmi.bmiHeader.biHeight = size.height;
+  bmi.bmiHeader.biPlanes = 1;
+  bmi.bmiHeader.biBitCount = 32;
+  bmi.bmiHeader.biCompression = BI_RGB;
 
   HBITMAP hbitmap =
     CreateDIBSection(memDC, reinterpret_cast<BITMAPINFO *>(&bmi),
@@ -111,7 +98,28 @@ void Window::Impl::CreateDIBitmapObject(WindowSize size)
     throw std::runtime_error("Failed to create surface!");
   }
 
-  bitmap = reinterpret_cast<HBITMAP>(SelectObject(memDC, hbitmap));
+  oldBitmap = reinterpret_cast<HBITMAP>(SelectObject(memDC, hbitmap));
+}
+
+void Window::Impl::Release()
+{
+  if (oldBitmap)
+  {
+    DeleteObject(SelectObject(memDC, oldBitmap));
+    oldBitmap = nullptr;
+  }
+
+  if (memDC)
+  {
+    ReleaseDC(hwnd, memDC);
+    memDC = nullptr;
+  }
+
+  if (screenDC)
+  {
+    ReleaseDC(hwnd, screenDC);
+    screenDC = nullptr;
+  }
 }
 
 Window::Window() = default;
@@ -168,8 +176,7 @@ void Window::Create(const WindowDesc& desc, EventBus *eventBus)
 
   GetClientRect(impl_->hwnd, &rc);
 
-  impl_->memDC = CreateCompatibleDC(nullptr);
-  impl_->CreateDIBitmapObject({rc.right - rc.left, rc.bottom - rc.top});
+  impl_->CreateSurface({rc.right - rc.left, rc.bottom - rc.top});
 }
 
 bool Window::Update()
@@ -196,8 +203,7 @@ Surface Window::GetSurface() noexcept
 
 void Window::Present()
 {
-  HDC hdc = GetDC(impl_->hwnd);
-  BitBlt(hdc, 0, 0, impl_->desc.size.width, impl_->desc.size.height,
+  BitBlt(impl_->screenDC, 0, 0, impl_->desc.size.width, impl_->desc.size.height,
     impl_->memDC, 0, 0, SRCCOPY);
 }
 

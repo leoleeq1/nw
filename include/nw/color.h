@@ -28,6 +28,12 @@ struct Color
       ...);
   }
 
+  static Color white;
+  static Color black;
+  static Color red;
+  static Color blue;
+  static Color green;
+
   union
   {
     uint32_t u32;

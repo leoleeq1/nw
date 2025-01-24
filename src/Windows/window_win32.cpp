@@ -176,7 +176,7 @@ void Window::Create(const WindowDesc& desc, EventBus *eventBus)
 
   GetClientRect(impl_->hwnd, &rc);
 
-  impl_->CreateSurface({rc.right - rc.left, rc.bottom - rc.top});
+  CreateSurface({rc.right - rc.left, rc.bottom - rc.top});
 }
 
 bool Window::Update()
@@ -194,6 +194,12 @@ bool Window::Update()
   }
 
   return true;
+}
+
+Surface Window::CreateSurface(WindowSize size)
+{
+  impl_->CreateSurface(size);
+  return GetSurface();
 }
 
 Surface Window::GetSurface() noexcept

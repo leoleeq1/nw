@@ -21,6 +21,7 @@ class Window
 
   void Create(const WindowDesc& desc, EventBus *eventBus);
   bool Update();
+  Surface CreateSurface(WindowSize size);
   Surface GetSurface() noexcept;
   void Present();
 

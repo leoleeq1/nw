@@ -72,6 +72,11 @@ Window::Impl::~Impl()
 
 void Window::Impl::CreateSurface(WindowSize size)
 {
+  if (size.width == surface.width && size.height == surface.height)
+  {
+    return;
+  }
+
   Release();
 
   screenDC = GetDC(hwnd);

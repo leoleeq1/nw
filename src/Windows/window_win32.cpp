@@ -164,7 +164,6 @@ void Window::Create(const WindowDesc& desc, EventBus *eventBus)
   impl_->state.fullscreen = desc.mode;
 
   RECT rc = {0, 0, wss.width, wss.height};
-
   AdjustWindowRectEx(&rc, wss.style, FALSE, wss.exStyle);
 
   impl_->hwnd =
@@ -368,7 +367,10 @@ LRESULT Window::Impl::s_WndProc(
 
         SetWindowLongPtr(hwnd, GWL_STYLE, wss.style);
         SetWindowLongPtr(hwnd, GWL_EXSTYLE, wss.exStyle);
-        SetWindowPos(hwnd, HWND_TOP, 0, 0, wss.width, wss.height, flags);
+        RECT rc = {0, 0, wss.width, wss.height};
+        AdjustWindowRectEx(&rc, wss.style, FALSE, wss.exStyle);
+        SetWindowPos(
+          hwnd, HWND_TOP, 0, 0, rc.right - rc.left, rc.bottom - rc.top, flags);
         ShowWindow(hwnd, wss.cmdShow);
 
         impl->state.fullscreen = target;

@@ -209,7 +209,7 @@ Surface Window::GetSurface() noexcept
 
 void Window::Present()
 {
-  BitBlt(impl_->screenDC, 0, 0, impl_->desc.size.width, impl_->desc.size.height,
+  BitBlt(impl_->screenDC, 0, 0, impl_->surface.width, impl_->surface.height,
     impl_->memDC, 0, 0, SRCCOPY);
 }
 

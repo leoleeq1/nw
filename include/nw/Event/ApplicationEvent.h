@@ -89,6 +89,7 @@ class WindowResizeEvent : public Event
  public:
   explicit WindowResizeEvent(WindowSize size) : size_(size) {}
 
+  [[nodiscard]] WindowSize GetSize() const { return size_; }
   [[nodiscard]] int32_t GetWidth() const { return size_.width; }
   [[nodiscard]] int32_t GetHeight() const { return size_.height; }
 

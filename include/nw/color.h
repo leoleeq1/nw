@@ -5,27 +5,23 @@
 
 namespace nw
 {
-namespace
-{
 template<typename T>
 concept ByteConvertible = std::convertible_to<T, uint8_t>;
-} // namespace
 
 struct Color
 {
-  Color() : u32(0U) {}
-  explicit Color(uint32_t color) : u32(color) {}
-  explicit Color(std::span<uint8_t, 4> argb)
+  Color() noexcept {}
+  explicit Color(uint32_t color) noexcept : u32(color) {}
+  explicit Color(std::span<uint8_t, 4> argb) noexcept
     : u32(*reinterpret_cast<uint32_t *>(&argb))
   {
   }
-  template<ByteConvertible... Args> Color(Args... args)
+  template<ByteConvertible... Args> explicit Color(Args... args)
   {
     static_assert(sizeof...(Args) == 4, "Four arguments required!");
     int index = 0;
-    ((*(reinterpret_cast<uint8_t *>(this) + index++) =
-         static_cast<uint8_t>(args)),
-      ...);
+    const std::span<uint8_t> color{reinterpret_cast<uint8_t *>(&u32), 4};
+    ((color[index++] = static_cast<uint8_t>(args)), ...);
   }
 
   static Color white;
@@ -36,7 +32,7 @@ struct Color
 
   union
   {
-    uint32_t u32;
+    uint32_t u32{};
     struct
     {
       uint8_t b;

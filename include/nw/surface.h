@@ -3,14 +3,15 @@
 #include "nw/window_desc.h"
 
 #include <cstdint>
-#include <memory>
+#include <vector>
 
 namespace nw
 {
 struct Surface
 {
-  Surface(WindowSize size)
-    : pixels{std::make_unique<nw::Color[]>(size.width * size.height)},
+  explicit Surface(WindowSize size)
+    : pixels(static_cast<std::size_t>(size.width)
+             * static_cast<std::size_t>(size.height)),
       width{size.width},
       height{size.height}
   {
@@ -18,17 +19,18 @@ struct Surface
 
   constexpr void Resize(WindowSize size)
   {
-    pixels = std::make_unique<nw::Color[]>(size.width * size.height);
+    pixels.resize(static_cast<std::size_t>(size.width)
+                  * static_cast<std::size_t>(size.height));
     width = size.width;
     height = size.height;
   }
 
   [[nodiscard]] constexpr size_t Length() const
   {
-    return static_cast<size_t>(width) * static_cast<size_t>(height);
+    return static_cast<size_t>(width) * static_cast<std::size_t>(height);
   }
 
-  std::unique_ptr<Color[]> pixels;
+  std::vector<Color> pixels;
   int32_t width;
   int32_t height;
 };

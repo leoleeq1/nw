@@ -163,9 +163,8 @@ LRESULT Window::Impl::s_WndProc(
       HDC memdc = CreateCompatibleDC(hdc);
       HBITMAP bitmap = CreateCompatibleBitmap(
         hdc, impl->surface->width, impl->surface->height);
-      HBITMAP oldBitmap =
-        reinterpret_cast<HBITMAP>(SelectObject(memdc, bitmap));
-      BITMAPINFO bmi{
+      auto *oldBitmap = reinterpret_cast<HBITMAP>(SelectObject(memdc, bitmap));
+      const BITMAPINFO bmi{
         .bmiHeader{
                    .biSize = sizeof(BITMAPINFOHEADER),
                    .biWidth = impl->surface->width,
@@ -173,11 +172,18 @@ LRESULT Window::Impl::s_WndProc(
                    .biPlanes = 1,
                    .biBitCount = 32,
                    .biCompression = BI_RGB,
+                   .biSizeImage{},
+                   .biXPelsPerMeter{},
+                   .biYPelsPerMeter{},
+                   .biClrUsed{},
+                   .biClrImportant{},
                    },
+        .bmiColors{},
       };
-      SetDIBitsToDevice(memdc, 0, 0, impl->surface->width,
-        impl->surface->height, 0, 0, 0, impl->surface->height,
-        impl->surface->pixels.get(), &bmi, DIB_RGB_COLORS);
+      SetDIBitsToDevice(memdc, 0, 0, static_cast<DWORD>(impl->surface->width),
+        static_cast<DWORD>(impl->surface->height), 0, 0, 0,
+        static_cast<UINT>(impl->surface->height), impl->surface->pixels.data(),
+        &bmi, DIB_RGB_COLORS);
       BitBlt(hdc, 0, 0, impl->surface->width, impl->surface->height, memdc, 0,
         0, SRCCOPY);
       SelectObject(memdc, oldBitmap);

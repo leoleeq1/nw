@@ -52,80 +52,15 @@ struct Window::Impl
   ~Impl();
   static LRESULT CALLBACK s_WndProc(
     HWND hwnd, uint32_t msg, WPARAM wParam, LPARAM lParam);
-  void CreateSurface(WindowSize size);
-  void Release();
 
   WindowDesc desc;
   EventBus *eventBus;
-  Surface surface;
+  Surface *surface;
   HWND hwnd;
-  HDC screenDC;
-  HDC memDC;
-  HBITMAP oldBitmap;
   WindowState state;
 };
 
-Window::Impl::~Impl()
-{
-  Release();
-}
-
-void Window::Impl::CreateSurface(WindowSize size)
-{
-  if (size.width == surface.width && size.height == surface.height)
-  {
-    return;
-  }
-
-  Release();
-
-  screenDC = GetDC(hwnd);
-  memDC = CreateCompatibleDC(screenDC);
-
-  uint8_t *pixels = nullptr;
-  BITMAPINFO bmi;
-  memset(&bmi, 0, sizeof(BITMAPINFO));
-  bmi.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
-  bmi.bmiHeader.biWidth = size.width;
-  bmi.bmiHeader.biHeight = size.height;
-  bmi.bmiHeader.biPlanes = 1;
-  bmi.bmiHeader.biBitCount = 32;
-  bmi.bmiHeader.biCompression = BI_RGB;
-
-  HBITMAP hbitmap =
-    CreateDIBSection(memDC, reinterpret_cast<BITMAPINFO *>(&bmi),
-      DIB_RGB_COLORS, reinterpret_cast<void **>(&pixels), nullptr, 0);
-
-  surface = {reinterpret_cast<Color *>(pixels), size.width, size.height};
-
-  if (!hbitmap)
-  {
-    throw std::runtime_error("Failed to create surface!");
-  }
-
-  oldBitmap = reinterpret_cast<HBITMAP>(SelectObject(memDC, hbitmap));
-}
-
-void Window::Impl::Release()
-{
-  if (oldBitmap)
-  {
-    DeleteObject(SelectObject(memDC, oldBitmap));
-    oldBitmap = nullptr;
-  }
-
-  if (memDC)
-  {
-    ReleaseDC(hwnd, memDC);
-    memDC = nullptr;
-  }
-
-  if (screenDC)
-  {
-    ReleaseDC(hwnd, screenDC);
-    screenDC = nullptr;
-  }
-}
+Window::Impl::~Impl() = default;
 
 Window::Window() = default;
 Window::~Window()
@@ -136,7 +71,8 @@ Window::~Window()
   }
 }
 
-void Window::Create(const WindowDesc& desc, EventBus *eventBus)
+void Window::Create(
+  const WindowDesc& desc, EventBus *eventBus, Surface *surface)
 {
   impl_ = std::make_unique<Impl>(desc, eventBus);
   const WNDCLASSEXA wc{
@@ -177,10 +113,7 @@ void Window::Create(const WindowDesc& desc, EventBus *eventBus)
   }
 
   ShowWindow(impl_->hwnd, wss.cmdShow);
-
-  GetClientRect(impl_->hwnd, &rc);
-
-  CreateSurface({rc.right - rc.left, rc.bottom - rc.top});
+  impl_->surface = surface;
 }
 
 bool Window::Update()
@@ -200,21 +133,10 @@ bool Window::Update()
   return true;
 }
 
-Surface Window::CreateSurface(WindowSize size)
-{
-  impl_->CreateSurface(size);
-  return GetSurface();
-}
-
-Surface Window::GetSurface() noexcept
-{
-  return impl_->surface;
-}
-
 void Window::Present()
 {
-  BitBlt(impl_->screenDC, 0, 0, impl_->surface.width, impl_->surface.height,
-    impl_->memDC, 0, 0, SRCCOPY);
+  InvalidateRect(impl_->hwnd, nullptr, false);
+  UpdateWindow(impl_->hwnd);
 }
 
 LRESULT Window::Impl::s_WndProc(
@@ -235,6 +157,33 @@ LRESULT Window::Impl::s_WndProc(
     case WM_PAINT:
     {
       impl->eventBus->SendEvent(std::make_unique<WindowPaintEvent>());
+
+      PAINTSTRUCT ps;
+      HDC hdc = BeginPaint(hwnd, &ps);
+      HDC memdc = CreateCompatibleDC(hdc);
+      HBITMAP bitmap = CreateCompatibleBitmap(
+        hdc, impl->surface->width, impl->surface->height);
+      HBITMAP oldBitmap =
+        reinterpret_cast<HBITMAP>(SelectObject(memdc, bitmap));
+      BITMAPINFO bmi{
+        .bmiHeader{
+                   .biSize = sizeof(BITMAPINFOHEADER),
+                   .biWidth = impl->surface->width,
+                   .biHeight = impl->surface->height,
+                   .biPlanes = 1,
+                   .biBitCount = 32,
+                   .biCompression = BI_RGB,
+                   },
+      };
+      SetDIBitsToDevice(memdc, 0, 0, impl->surface->width,
+        impl->surface->height, 0, 0, 0, impl->surface->height,
+        impl->surface->pixels.get(), &bmi, DIB_RGB_COLORS);
+      BitBlt(hdc, 0, 0, impl->surface->width, impl->surface->height, memdc, 0,
+        0, SRCCOPY);
+      SelectObject(memdc, oldBitmap);
+      DeleteObject(bitmap);
+      DeleteDC(memdc);
+      EndPaint(hwnd, &ps);
       break;
     }
     case WM_SIZE:
@@ -263,7 +212,7 @@ LRESULT Window::Impl::s_WndProc(
       else if (!impl->state.sizemoving)
       {
         impl->eventBus->SendEvent(std::make_unique<WindowResizeEvent>(
-          WindowSize(LOWORD(lParam), HIWORD(lParam))));
+          WindowSize{LOWORD(lParam), HIWORD(lParam)}));
       }
       break;
     }
@@ -278,7 +227,7 @@ LRESULT Window::Impl::s_WndProc(
       RECT rc;
       GetClientRect(hwnd, &rc);
       impl->eventBus->SendEvent(std::make_unique<WindowResizeEvent>(
-        WindowSize(rc.right - rc.left, rc.bottom - rc.top)));
+        WindowSize{rc.right - rc.left, rc.bottom - rc.top}));
       break;
     }
     case WM_GETMINMAXINFO:

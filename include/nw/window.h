@@ -1,6 +1,6 @@
 #pragma once
-#include "surface.h"
-#include "window_desc.h"
+#include "nw/surface.h"
+#include "nw/window_desc.h"
 
 #include <cstddef>
 #include <cstdint>
@@ -19,10 +19,8 @@ class Window
   Window(Window&&) = delete;
   Window& operator=(Window&&) = delete;
 
-  void Create(const WindowDesc& desc, EventBus *eventBus);
+  void Create(const WindowDesc& desc, EventBus *eventBus, Surface *surface);
   bool Update();
-  Surface CreateSurface(WindowSize size);
-  Surface GetSurface() noexcept;
   void Present();
 
  private:
